@@ -15,9 +15,9 @@
        regexp: “{{ item.From }}”
        line: “{{ item.To }}”
     with_items:
-        - { From: “#listen_addresses = ‘localhost’”, To: 'listen_addresses = {{ ansible_default_ipv4.address }}’ }
-        - { From: ‘#wal_level = replica’, To: ‘wal_level = replica’ }
-        - { From: ‘#synchronous_commit = on’, To: ‘synchronous_commit = local’ }
-        - { From: ‘#archive_mode = off’, To: ‘archive_mode = on’ }
-        - { From: “#archive_command = ‘’”, To: “archive_command = ‘cp %p /var/lib/pgsql/9.6/archive/%f’” }
-        - { From:  ‘#max_wal_senders = 0’, To: ‘max_wal_senders = 2’ }
+         - { From: “#listen_addresses = ‘localhost’”, To: 'listen_addresses = {{ ansible_default_ipv4.address }}’ }
+         - { From: ‘#wal_level = replica’, To: ‘wal_level = replica’ }
+         - { From: ‘#synchronous_commit = on’, To: ‘synchronous_commit = local’ }
+         - { From: ‘#archive_mode = off’, To: ‘archive_mode = on’ }
+         - { From: “#archive_command = ‘’”, To: “archive_command = ‘testing’” }
+         - { From:  ‘#max_wal_senders = 0’, To: ‘max_wal_senders = 2’ }
