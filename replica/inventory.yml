@@ -1,0 +1,13 @@
+[pgmaster]
+ 
+host1 ansible_host=192.168.1.97 ansible_connection=ssh ansible_user=ansadmin ansible_password=ansadmin123
+ 
+[pgslave]
+ 
+host2 ansible_host=192.168.1.99 ansible_connection=ssh ansible_user=ansadmin ansible_password=ansadmin123
+ 
+[all:children]
+ 
+pgmaster
+ 
+pgslave

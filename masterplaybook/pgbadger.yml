@@ -1,0 +1,7 @@
+---
+- hosts: secondary
+  tasks:
+  - name: create directory to install Postgres Binaries
+    file:
+      path: /opt/secondary/
+      state: directory

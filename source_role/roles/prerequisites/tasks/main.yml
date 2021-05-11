@@ -1,0 +1,4 @@
+---
+# tasks file for prerequisites
+- name: Include the prerequisites.yml
+  include_tasks: prerequisites.yml

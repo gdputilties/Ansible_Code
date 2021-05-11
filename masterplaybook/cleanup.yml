@@ -1,0 +1,33 @@
+---
+   - name: check DB Service status
+     command:  /opt/PostgreSQL-10.5/bin/pg_ctl -D /pgdatabase/data/ status
+     become: true
+     become_user: postgres
+     register: status_check
+     ignore_errors: yes
+
+   - name: Stop DB services
+     command:  /opt/PostgreSQL-10.5/bin/pg_ctl -D /pgdatabase/data/ stop -mf
+     become: true
+     become_user: postgres
+     ignore_errors: yes
+     when: status_check.rc == 0
+ 
+   - name: Remove repository (and clean up left-over metadata)
+     yum:
+      name: ['gcc','zlib-devel', 'readline-devel','openssl','python-psycopg2']
+      state: absent
+   
+   - name: delete binaries and data directory
+     file:
+       path: "{{ item }}"
+       state: absent
+       remote_src: true
+     with_items:
+      - /tmp/tarballs/postgresql-10.5.tar.gz
+      - /tmp/tarballs/postgresql-10.5
+      - /pgdatabase/data
+      - /opt/PostgreSQL-10.5/
+    
+
+ 

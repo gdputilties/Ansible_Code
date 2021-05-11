@@ -1,0 +1,42 @@
+---
+- name: Postgres tarball download playbook
+  get_url:
+     url: https://ftp.postgresql.org/pub/source/v{{ pg_ver}}/postgresql-{{ pg_ver}}.tar.gz
+     dest: /tmp/tarballs/
+
+- name: Extract tarball
+  unarchive:
+      src: /tmp/tarballs/postgresql-{{ pg_ver}}.tar.gz
+      dest: /tmp/tarballs/
+      remote_src: true
+- name: create directory to install Postgres Binaries
+  file:
+      path: /opt/PostgreSQL-{{ pg_ver}}/
+      state: directory
+
+- name: Build PostgreSQL
+  shell: "{{ item }}"
+  args:
+        chdir: "{{ dir_path }}"
+  with_items:
+       - ./configure --prefix=/opt/PostgreSQL-{{ pg_ver}}
+       - make
+       - make install
+
+- name: Creating user postgres with admin access
+  user:
+       name: postgres
+       password: "{{ ppostgres | password_hash('sha512') }}"
+
+- name: create  postgres data directory
+  file:
+      path: /pgdatabase/data
+      state: directory
+      owner: postgres
+      group: postgres
+      mode: 0700
+
+- name: Export Postgres Path
+  shell: echo 'export PATH=$PATH:/opt/PostgreSQL-{{ pg_ver}}/bin' > /etc/profile.d/postgres.sh
+
+

@@ -1,0 +1,58 @@
+---
+- name: PGbadger deployment playbook
+  hosts: all
+  become: yes
+  gather_facts: yes
+  vars:
+    dir_path: '/tmp/tarballs/pgbadger-11.5/'
+    
+  tasks:
+  - name:  Install PGBadger Dependencies
+    yum: 
+     name: ['perl-JSON-XS']
+     state: latest
+ 
+  - name: PGBadger 11.5  tarball download  
+    get_url:
+       url: https://sourceforge.net/projects/pgbadger/files/11.5/pgbadger-11.5.tar.gz/download
+       dest: /tmp/tarballs/
+
+  - name: Extract tarball 
+    unarchive:
+      src: /tmp/tarballs/pgbadger-11.5.tar.gz
+      dest: /tmp/tarballs/
+      remote_src: true
+    
+  - name: Build PostgreSQL
+    shell: "{{ item }}"
+    args:
+        chdir: "{{ dir_path }}"
+    with_items:
+       - perl Makefile.PL
+       - make
+       - sudo make install
+
+  - name: Setting Params in postgresql.conf
+    lineinfile:
+        path: /pgdatabase/data/postgresql.conf
+        regexp: "{{ item.From }}"
+        line: "{{ item.To }}"
+        backrefs: yes
+    with_items:
+         - { From: 'log_checkpoints', To: 'log_checkpoints = on'}
+         - { From: 'log_connections', To: 'log_connections = on'}
+         - { From: 'log_disconnections', To: 'log_disconnections = on'}
+         - { From: 'log_lock_waits', To: 'log_lock_waits = on'}
+         - { From: 'log_disconnections', To: 'log_disconnections = on'}
+         - { From: 'log_temp_files', To: 'log_temp_files = 0'}
+         - { From: 'log_autovacuum_min_duration', To: 'log_autovacuum_min_duration = 0'}
+         - { From: 'log_error_verbosity', To: 'log_error_verbosity = default'}
+  - name: Restart  DB instance
+    command: /opt/PostgreSQL-10/bin/psql -U postgres -c "select pg_reload_conf();"
+    become: true
+    become_user: postgres
+
+
+
+
+

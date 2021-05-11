@@ -1,0 +1,11 @@
+---
+- name: Initialize DB
+  command:  /opt/PostgreSQL-{{ pg_ver}}/bin/initdb -D /pgdatabase/data/
+  become: true
+  become_user: postgres
+
+- name: Start  DB Services
+  command:  /opt/PostgreSQL-{{ pg_ver}}/bin/pg_ctl -D /pgdatabase/data/ -l /tmp/start.log start
+  become: true
+  become_user: postgres
+

@@ -1,0 +1,65 @@
+---
+- name: Postgres deployment playbook
+  hosts: all
+  become: yes
+  gather_facts: yes
+  vars:
+    dir_path: '/tmp/tarballs/postgresql-10.5/'
+    ppostgres: postgres
+ 
+  tasks:
+  - name:  Install PostgreSQL Dependencies
+    yum: 
+     name: ['gcc','zlib-devel', 'readline-devel','openssl','python-psycopg2']
+     state: latest
+ 
+  - name: Postgres 10.5  tarball download playbook
+    get_url:
+       url: https://ftp.postgresql.org/pub/source/v10.5/postgresql-10.5.tar.gz
+       dest: /tmp/tarballs/
+
+  - name: Extract tarball 
+    unarchive:
+      src: /tmp/tarballs/postgresql-10.5.tar.gz
+      dest: /tmp/tarballs/
+      remote_src: true
+  - name: create directory to install Postgres Binaries
+    file:
+      path: /opt/PostgreSQL-10/
+      state: directory
+
+  - name: Build PostgreSQL
+    shell: "{{ item }}"
+    args:
+        chdir: "{{ dir_path }}"
+    with_items:
+       - ./configure --prefix=/opt/PostgreSQL-10
+       - make
+       - make install
+
+  - name: Creating user postgres with admin access
+    user: 
+       name: postgres
+       password: "{{ ppostgres | password_hash('sha512') }}"
+
+  - name: create  postgres data directory 
+    file:
+      path: /pgdatabase/data
+      state: directory
+      owner: postgres
+      group: postgres
+      mode: 0700
+
+  - name: Export Postgres Path
+    shell: echo 'export PATH=$PATH:/opt/PostgreSQL-10/bin' > /etc/profile.d/postgres.sh 
+
+  - name: Initialize DB 
+    command:  /opt/PostgreSQL-10/bin/initdb -D /pgdatabase/data/ 
+    become: true
+    become_user: postgres
+
+  - name: Start  DB Services
+    command:  /opt/PostgreSQL-10/bin/pg_ctl -D /pgdatabase/data/ -l /tmp/start.log start
+    become: true
+    become_user: postgres
+

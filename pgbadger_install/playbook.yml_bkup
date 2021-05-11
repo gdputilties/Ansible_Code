@@ -1,0 +1,73 @@
+---
+- name: PGbadger deployment playbook
+  hosts: all
+  become: yes
+  gather_facts: yes
+  vars:
+    dir_path: '/tmp/tarballs/pgbadger-11.5/'
+    
+  tasks:
+  - name:  Install PGBadger Dependencies
+    yum: 
+     name: ['perl-JSON-XS']
+     state: latest
+ 
+  - name: PGBadger 11.5  tarball download  
+    get_url:
+       url: https://sourceforge.net/projects/pgbadger/files/11.5/pgbadger-11.5.tar.gz/download
+       dest: /tmp/tarballs/
+
+  - name: Extract tarball 
+    unarchive:
+      src: /tmp/tarballs/pgbadger-11.5.tar.gz
+      dest: /tmp/tarballs/
+      remote_src: true
+    
+  - name: Build PostgreSQL
+    shell: "{{ item }}"
+    args:
+        chdir: "{{ dir_path }}"
+    with_items:
+       - perl Makefile.PL
+       - make
+       - sudo make install
+
+  - name: Setting Params in postgresql.conf
+    replace:
+      path: /pgdatabase/data/postgresql.conf 
+      regexp: '^log_checkpoints'
+      replace: "log_checkpoints = on"
+      
+    replace:
+      path: /pgdatabase/data/postgresql.conf 
+      regexp: '^log_connections'
+      replace: "log_connections = on"
+      
+    replace:
+      path: /pgdatabase/data/postgresql.conf 
+      regexp: '^log_disconnections'
+      replace: "log_disconnections = on"
+ 
+    replace:
+      path: /pgdatabase/data/postgresql.conf 
+      regexp: '^log_lock_waits'
+      replace: "log_lock_waits = on"
+      
+      
+    replace:
+      path: /pgdatabase/data/postgresql.conf 
+      regexp: '^log_temp_files'
+      replace: "log_temp_files = 0"
+
+    replace:
+      path: /pgdatabase/data/postgresql.conf 
+      regexp: '^log_autovacuum_min_duration'
+      replace: "log_autovacuum_min_duration = 0"
+      
+    replace:
+      path: /pgdatabase/data/postgresql.conf 
+      regexp: '^log_error_verbosity'
+      replace: "log_error_verbosity = default"
+      
+      
+

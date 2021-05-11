@@ -1,0 +1,14 @@
+---
+- name: Postgres deployment playbook
+  hosts: all
+  become: yes
+  gather_facts: yes
+  vars:
+    pg_ver: 12.0
+    dir_path: '/tmp/tarballs/postgresql-{{ pg_ver}}/'
+    ppostgres: postgres
+  roles:
+    - role: cleanup
+    - role: prerequisites
+    - role: pginstall
+    - role: pginit

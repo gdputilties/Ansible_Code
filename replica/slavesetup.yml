@@ -1,0 +1,62 @@
+---
+- name: Setup pgslave
+ 
+  hosts: pgslave
+ 
+  become: yes
+ 
+  become_method: postgres
+ 
+  gather_facts: yes
+ 
+  tags: [pgslave]
+ 
+  vars:
+        replica_password: ‘replica123’
+        pg_bin: /opt/PostgreSQL-12.0/bin/pg_basebackup -c
+  tasks:
+    - name: Stop  DB Services
+      command:  /opt/PostgreSQL-12.0/bin/pg_ctl -D /pgdatabase/data/ stop -mf 
+    
+    - name: Move data backup
+      shell: mv data data-backup
+      args: 
+          chdir: /pgdatabase/
+ 
+    - name: Create data directory
+      file:
+         path: /pgdatabase/data/
+         mode: 0700
+         owner: postgres
+         group: postgres
+         state: directory
+   
+    - name: Backup initial data from master
+      shell: su - postgres -c “PGPASSWORD={{ replica_password }} pg_basebackup -w 
+             -h {{ hostvars[‘host1’].ansible_default_ipv4.address}} -U replica -D /pgdatabase/data -P --xlog”
+
+    - name: Update postgresql.conf
+      lineinfile:
+            path: /pgdatabase/data/postgresql.conf
+            regexp: “{{ item.From }}”
+            line: “{{ item.To }}”
+      with_items:
+           - { From: “#listen_addresses = ‘localhost’”, To: 'listen_addresses = {{ ansible_default_ipv4.address }}' }
+           - { From: “#hot_standby = off”, To: “hot_standby = on” } 
+
+    - name: Create recovery.conf
+      blockinfile:
+           path: /pgdatabase/data/recovery.conf
+           block: |
+             standby_mode = ‘on’
+             primary_conninfo = ‘host={{ hostvars[‘host1’].ansible_default_ipv4.address }} port=5432 
+               user=replica password={{ replica_password }} application_name=slave01’
+             trigger_file = ‘/tmp/postgresql.trigger.5432’
+           mode: 0600
+           owner: postgres
+           group: postgres
+           state: directory
+
+    - name: Start  DB Services
+      command:  /opt/PostgreSQL-12.0/bin/pg_ctl -D /pgdatabase/data/ start
+

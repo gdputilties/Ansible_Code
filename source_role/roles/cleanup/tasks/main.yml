@@ -1,0 +1,4 @@
+---
+# tasks file for cleanup
+- name: Include the cleanup.yml
+  include_tasks: cleanup.yml

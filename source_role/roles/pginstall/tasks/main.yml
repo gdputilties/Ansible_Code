@@ -1,0 +1,5 @@
+---
+# tasks file for pginstall
+- name: Include the pginstall.yml
+  include_tasks: pginstall.yml
+

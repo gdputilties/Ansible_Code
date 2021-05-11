@@ -1,0 +1,5 @@
+---
+- name: Install PostgreSQL Dependencies
+  yum:
+    name: ['gcc','zlib-devel', 'readline-devel','openssl','python-psycopg2']
+    state: latest

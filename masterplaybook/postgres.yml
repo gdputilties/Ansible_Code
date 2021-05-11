@@ -1,0 +1,8 @@
+---
+- hosts: primary
+  tasks:
+  - name: create directory to install Postgres Binaries
+    file:
+      path: /tmp/lavanya
+      state: directory
+      remote_src: true

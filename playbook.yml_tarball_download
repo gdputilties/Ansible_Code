@@ -1,0 +1,7 @@
+---
+- hosts: localhost
+  tasks:
+  - name: Postgres 10.5  tarball download playbook
+    get_url:
+       url: https://ftp.postgresql.org/pub/source/v10.5/postgresql-10.5.tar.gz
+       dest: /tmp/tarballs/

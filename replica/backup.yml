@@ -1,0 +1,79 @@
+- name: Setup pgmaster
+ 
+  hosts: pgmaster
+ 
+  become: yes
+ 
+  become_method: sudo
+ 
+  gather_facts: yes
+ 
+  tags: [pgmaster]
+ 
+  vars:
+ 
+    replica_password: ‘replica123’
+ 
+  tasks:
+ 
+    - name: Update /pgdatabase/data/postgresql.conf
+ 
+      lineinfile:
+ 
+      path: /pgdatabase/data/postgresql.conf
+ 
+      regexp: “{{ item.regexp }}”
+ 
+      line: “{{ item.line }}”
+ 
+      with_items:
+ 
+          - { regexp: '#listen_addresses = ‘localhost’', line: 'listen_addresses = ‘{{ ansible_default_ipv4.address }}’' }
+ 
+          - { regexp: ‘#wal_level = minimal’, line: ‘wal_level = hot_standby’ }
+ 
+          - { regexp: ‘#synchronous_commit = on’, line: ‘synchronous_commit = local’ }
+ 
+          - { regexp: ‘#archive_mode = off’, line: ‘archive_mode = on’ }
+ 
+          - { regexp: “#archive_command = ‘’”, line: “archive_command = ‘cp %p /pgdatabase/data/archive/%f’” }
+ 
+          - { regexp: ‘#max_wal_senders = 0’, line: ‘max_wal_senders = 2’ }
+ 
+          - { regexp: ‘#wal_keep_segments = 0’, line: ‘wal_keep_segments = 2’ }
+ 
+          - { regexp: “#synchronous_standby_names = ‘’”, line: “synchronous_standby_names = ‘slave01’” }
+ 
+    - name: Create archive directory
+ 
+      file:
+ 
+      path: /pgdatabase/data/archive
+ 
+      mode: 0700
+ 
+      owner: postgres
+ 
+      group: postgres
+ 
+      state: directory
+ 
+    - name: Update pg_hba.conf
+     
+      blockinfile:
+ 
+       path: /pgdatabase/data/pg_hba.conf
+ 
+       insertafter: ‘#host replication postgres ::1/128 ident’
+ 
+       block: |
+ 
+             host replication replica 127.0.0.1/32 md5
+ 
+             host replication replica '{{ ansible_default_ipv4.address}}/32' md5
+ 
+             host replication replica {{ hostvars[‘host2’].ansible_default_ipv4.address }}/32 md5
+ 
+    - name: Create replication user
+ 
+      shell: sudo -u postgres psql -c “CREATE USER replica REPLICATION LOGIN ENCRYPTED PASSWORD ‘{{ replica_password }}’”

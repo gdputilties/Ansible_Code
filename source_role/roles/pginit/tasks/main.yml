@@ -1,0 +1,5 @@
+---
+# tasks file for pginit
+- name: Include the pginit.yml
+  include_tasks: pginit.yml
+
